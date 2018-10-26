@@ -1,0 +1,167 @@
+Dodato/izmenjeno skolske godine 2016/2017
+
+- enum types u defs.h: izmenjen redosled (INT = 0)
+- izbacena check_types() funkcija i svedena na jedan if(get_type ...)
+- u symtab.c i .h dodate sve set i get metode za polja tabele simbola koje su nedostajale (set_name(), set_kind() i set_type()) a izbacena je set_reg_type();
+- izbacene sve funkcije vezane za gk kod funkcije
+  - gen_fcall()
+  - gen_clear_args()
+  - gen_push() 
+- release_reg() preimenovano u free_if_reg()
+
+
+Dodato/izmenjeno u odnosu na 2013/2014
+--------------------------------------
+
++ Izmenjeno je značenje atributa za funkciju, sada je to broj parametara. 
++ Za tip jedinog parametra u tabelu simbola je dodato polje ptyp, zajedno sa pratećim set i get funkcijama i izmenom ostalog koda. 
+
++ Pošto je check_argument_number funkcija postala trivijalna, izbačena je.
+
+Sve ovo omogućava logičnije zadatke sa proširenjem funkcija.
+
+
++ if-else konflikt je ostavljen u syntax varijanti kompajlera, ali je razrešen u semantic i micko
+  varijantama, radi boljeg automatskog testiranja studentskih zadataka.
+
+
+semantic
+--------
+
++Makefile
+ - kompletno izmenjen, dodata mogućnost automatskog pokretanja testova
+ - i dalje se može koristiti kao stari, bez dodatnih mogućnosti
+
++defs.h
+ - dodata deklaracija warning funkcije
+ - proširena lista konstanti aritmetičkih operatora
+ - proširena lista konstanti relacionih operatora
+   (ove dve izmene omogućavaju raznovrsnije zadatke)
+
++sem.h
+ - izbačena deklaracija nepostojeće funkcije check_main
+ 
++sem.c
+ - izbačena funkcija check_argument_number (kod prebačen u semantic.y/function_call)
+
++semantic.y
+ + dodata promenljiva warning_count
+ + izbačeno "variable" iz "%type <i>"
+ + parameter ubačen u type<i>
+ + dodate dve nonassoc definicije za razrešenje konflikta u if-else
+ + parameter, umesto _TYPE stavljeno type
+ + parameter, povratna vrednost je broj parametara (da bude slično sa argument pravilu)
+ + function, pre body dela ubačena akcija za postavljanje broja parametara
+   (mora pre body, da bi se kompajlirale rekurzivne funkcije)
+ + body sada ima samo jednu alternativu, zbog izmene u variable_list
+ + variable_list, ponavljanje prepravljeno da bude 0 ili više puta
+ + variable, izbačeno $$ = iz c koda
+ + variable, dodata provera da li postoji parametar sa imenom tekuće promenljive
+ + argument, direktno se proverava tip parametra
+ + if_statement - dodato %prec ONLY_IF
+   (omogućava bolje automatsko testiranje)
+ + u warning funkciju dodato uvećavanje brojača
+ + izmenjena main funkcija
+    - ispisuje broj upozorenja i grešaka, ukoliko je potrebno
+    - vraća -1 ako je bilo sintaksne greške, odnosno error_count u suprotnom
+      (ovo omogućava razlikovanje sintaksnih i semantičkih grešaka kod automatskog testiranja)
+
++symtab.h
+ - dodate deklaracije funkcija set_ptyp i get_ptyp
+
++symtab.c
+ - dodate funkcije set_ptyp i get_ptyp, za postavljanje tipa parametra
+ - proširena clear_symbols funkcija da postavlja polje ptyp na NO_TYPE
+ - print_symtab, izmenjen printf poziv da tabela bude ispravno podvučena
+
+-test primeri
+ - abs.mc preimenovan u test-ok1.mc
+ - dodato još test primera, ispravnih i sa greškama
+ - sanity primer sadrži veći mc program
+
+
+
+micko
+-----
+
++ Makefile
+ - kompletno izmenjen, dodata mogućnost automatskog pokretanja testova
+ - i dalje se može koristiti kao stari, bez dodatnih mogućnosti
+
+codegen.h
+ - dodate deklaracije funkcija get_arop i get_jump
+ 
+codegen.c
+ - dodata globalna promenljiva invalid_value
+ - optimizovan uslov u take_reg
+ - ispravljena greška u free_reg kod poziva set_reg_type
+ - gen_cmp izmenjeno da oslobađa registre nakon korišćenja
+ - gen_mov izmenjeno da oslobađa registar nakon korišćenja
+ - gen_arith izmenjeno da oslobađa registre nakon korišćenja
+ - dodata funkcija get_arop za pristup arithmetic_operators nizu
+ - dodata funkcija get_jump za pristup opposite_jumps nizu
+   (funkcije dodate radi sprečavanja segfault-a koji se lako može
+    javiti u originalnom micko kompajleru, a još lakše u studentskim zadacima)
+
+defs.h
+ - dodata deklaracija warning funkcije
+ - izmenjen warn makro da koristi warning funkciju
+ - proširena lista konstanti aritmetičkih operatora i arithmetic_operators niz
+ - proširena lista konstanti aritmetičkih operatora i opposite_jumps niz
+   (ove izmene omogućavaju raznovrsnije zadatke)
+
+micko.y
+ - dodata promenljiva warning_count
+ - parameter pojam dobio vrednost
+ - dodate dve nonassoc definicije za razrešenje konflikta u if-else
+ - function, pre body dela ubačena akcija za postavljanje broja parametara
+   (mora pre body, da bi se kompajlirale rekurzivne funkcije)
+ - parameter, umesto _TYPE stavljeno type
+ - parameter, povratna vrednost je broj parametara (da bude slično sa argument pravilu)
+ - body sada ima samo jednu alternativu, zbog izmene u variable_list
+ - body, umanjenje steka se generiše samo ako ima lokalnih promenljivih
+ - variable_list, ponavljanje prepravljeno da bude 0 ili više puta
+ - variable, dodata provera da li postoji parametar sa imenom tekuće promenljive
+ - if_statement - dodato %prec ONLY_IF
+   (omogućava bolje automatsko testiranje)
+ - argument, direktno se proverava tip parametra
+ - if_statement, izmenjen c kod kod reg_exp u skladu sa izmenama u reg_exp
+ - reg_exp, vraća redni broj naredbe skoka i više ne generiše uslovni skok
+   (izmenjeno zbog problema sa zadacima kod kojih se koristi reg_exp) 
+ - dodata warning funkcija
+ - izmenjena main funkcija
+    - ispisuje broj upozorenja i grešaka, ukoliko je potrebno
+    - vraća -1 ako je bilo sintaksne greške, odnosno error_count u suprotnom
+      (ovo omogućava razlikovanje sintaksnih i semantičkih grešaka kod automatskog testiranja)
+
+sem.c, sem.h
+ - izbačena funkcija check_argument_number (kod prebačen u micko.y/function_call)
+
+symtab.h
+ - dodate deklaracije funkcija set_ptyp i get_ptyp
+
+symtab.c
+ - dodate funkcije set_ptyp i get_ptyp, za postavljanje tipa parametra
+ - proširena clear_symbols funkcija da postavlja polje ptyp na NO_TYPE
+ - print_symtab, izmenjen printf poziv da tabela bude ispravno podvučena
+
+test primeri
+ - abs.mc preimenovan u test-ok1.mc
+ - dodato još test primera, ispravnih i sa greškama
+ - sanity primer sadrži veći mc program
+
+
+
+
+TODO
++ check_types iz sem.c u .y
+
+
+mart 2017
+- polje attr izmenjeno u atr1
+- polje ptyp izmenjeno u atr2
+- sve izmene u skladu sa prethodne 2 izmene - u funkcijama
+
+
+
+
