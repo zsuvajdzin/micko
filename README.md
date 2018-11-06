@@ -1,2 +1,2 @@
 # micko
-MiniC kompajler za predmet Programski prevodioci
+<b>MiniC</b> kompajler za predmet Programski prevodioci.
