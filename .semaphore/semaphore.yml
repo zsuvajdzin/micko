@@ -11,6 +11,7 @@ blocks:
       jobs:
       - name: Codegen test
         commands:
+          - sudo apt-get install flex
           - checkout
           - cd code-gen
           - make test 
