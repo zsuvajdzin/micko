@@ -21,8 +21,9 @@ Dodato/izmenjeno u odnosu na 2013/2014
 Sve ovo omogućava logičnije zadatke sa proširenjem funkcija.
 
 
-+ if-else konflikt je ostavljen u syntax varijanti kompajlera, ali je razrešen u semantic i micko
-  varijantama, radi boljeg automatskog testiranja studentskih zadataka.
++ if-else konflikt je ostavljen u syntax varijanti kompajlera, 
+  ali je razrešen u semantic i micko varijantama, 
+  radi boljeg automatskog testiranja studentskih zadataka.
 
 
 semantic
@@ -93,13 +94,13 @@ codegen.h
  
 codegen.c
  - dodata globalna promenljiva invalid_value
- - optimizovan uslov u take_reg
- - ispravljena greška u free_reg kod poziva set_reg_type
- - gen_cmp izmenjeno da oslobađa registre nakon korišćenja
- - gen_mov izmenjeno da oslobađa registar nakon korišćenja
- - gen_arith izmenjeno da oslobađa registre nakon korišćenja
- - dodata funkcija get_arop za pristup arithmetic_operators nizu
- - dodata funkcija get_jump za pristup opposite_jumps nizu
+ - optimizovan uslov u take_reg()
+ - ispravljena greška u free_reg() kod poziva set_reg_type
+ - gen_cmp() izmenjeno da oslobađa registre nakon korišćenja
+ - gen_mov() izmenjeno da oslobađa registar nakon korišćenja
+ - gen_arith() izmenjeno da oslobađa registre nakon korišćenja
+ - dodata funkcija get_arop() za pristup arithmetic_operators nizu
+ - dodata funkcija get_jump() za pristup opposite_jumps nizu
    (funkcije dodate radi sprečavanja segfault-a koji se lako može
     javiti u originalnom micko kompajleru, a još lakše u studentskim zadacima)
 
@@ -161,6 +162,9 @@ mart 2017
 - polje attr izmenjeno u atr1
 - polje ptyp izmenjeno u atr2
 - sve izmene u skladu sa prethodne 2 izmene - u funkcijama
+
+novembar 2018
+- izmenjen Makefile tako da radi i proveru za warninge
 
 
 

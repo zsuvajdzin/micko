@@ -177,10 +177,8 @@ num_exp
         code(",");
         print_symbol($3);
         code(",");
-        if($3 >= 0 && $3 <= LAST_WORKING_REG)
-          free_reg();
-        if($1 >= 0 && $1 <= LAST_WORKING_REG)
-          free_reg();
+        free_if_reg($3);
+        free_if_reg($1);
         $$ = take_reg();
         print_symbol($$);
         set_type($$, t1);
