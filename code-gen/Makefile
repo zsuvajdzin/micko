@@ -100,7 +100,6 @@ test: $(SRC)
 	@echo -e "\n\e[01;34mRunning compiler with test files...\e[00m"
 	@if [ "$$TEST" != "" ]; then all_tests=$$TEST; \
 	else all_tests=test*.mc; fi; \
-  RESULT="true" ; \
 	for test in $$all_tests; do \
 		if [[ $$test =~ .*synerr.* ]]; then echo -e "\e[01;35m"; ttyp="syn"; \
 		elif [[ $$test =~ .*semerr.* ]]; then echo -e "\e[01;34m"; ttyp="sem"; \
@@ -148,6 +147,5 @@ test: $(SRC)
 			fi; \
 		fi; \
 	done; \
-  $($RESULT); \
 	echo
-  
+

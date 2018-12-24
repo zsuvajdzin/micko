@@ -100,7 +100,7 @@ void init_simulator();
 word* getmem(word address);
 char type_char(uchar type);
 word get_operand(Operand op);
-void set_operand(Operand op, int data);
+void set_operand(Operand op, word data);
 void set_flags_signed(quad result);
 void set_flags_unsigned(uquad result);
 void run_once();

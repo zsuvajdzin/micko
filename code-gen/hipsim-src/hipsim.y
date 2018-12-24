@@ -24,6 +24,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
+#include <libgen.h> //basename
+#include <unistd.h> //isatty
 #include "defs.h"
 #include "simulator.h"
 
@@ -285,8 +287,8 @@ input
             int l;
             $$ = make_opstr("$%s",$1);
             l = use_label($1, yylineno);
-            if (symtab[l].usage == LAB_UNDEFINED)
-                parsererror("Undeclared global variable %s",$1);
+            /* if (symtab[l].usage == LAB_UNDEFINED)
+                parsererror("Undeclared global variable %s",$1); */
             add_operand(OP_CONSTANT,0,symtab[l].address);
         }
     |   output
@@ -374,7 +376,8 @@ int main(int argc, char *argv[]) {
 
     if (error_count) {
         if (!run_complete)
-            cprintf("\n{RED}There were error(s) in ASM source.{NRM}\n", error_count);
+            cprintf("\n{RED}There were error(s) in ASM source.{NRM}", error_count);
+        printf("\n");
         exit(PARSE_ERROR);
     } else if (syntax_check)
             cprintf("{GRN}OK{NRM}");

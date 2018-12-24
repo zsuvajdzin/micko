@@ -19,7 +19,7 @@
 #ifndef DEFS_H
 #define DEFS_H
 
-#define VERSION "1.1.2"
+#define VERSION "1.1.3"
 
 #include <stdint.h>
 
@@ -61,8 +61,8 @@ enum { NO_ERROR = 0, PARSE_ERROR, ARG_ERROR, SIM_ERROR, STEP_ERROR };
 
 //pomoćni makroi za ispis
 #define parsererror(args...) sprintf(char_buffer, args), yyerror(char_buffer)
-#define argerror(args...) printf("\nArgument error: "), cprintf(args), printf("\n"), exit(ARG_ERROR)
-#define simerror(args...) printf("\nSimulation error: "), cprintf(args), printf("\n"), exit(SIM_ERROR)
+#define argerror(args...) cprintf("\n{RED}Argument error:{NRM} "), cprintf(args), printf("\n"), exit(ARG_ERROR)
+#define simerror(args...) cprintf("\n{RED}Simulation error:{NRM} "), cprintf(args), printf("\n"), exit(SIM_ERROR)
 
 #endif
 

@@ -14,7 +14,7 @@ SIMULATOR_DEPENDS = $(SIMULATOR_BUILD) defs.h simulator.h
 SIMULATOR_PATH = ./
 SIMULATOR = $(SIMULATOR_PATH)$(SOURCE)
 # fajlvi koje treba pobrisati da bi ostao samo izvorni kod
-SIMULATOR_CLEAN = lex.yy.c $(SOURCE).tab.c $(SOURCE).tab.h $(SOURCE).output $(SIMULATOR) *.?~
+SIMULATOR_CLEAN = lex.yy.c $(SOURCE).tab.c $(SOURCE).tab.h $(SOURCE).output $(SIMULATOR) *~
 # da li treba vršiti ispis
 ifeq (,$(findstring s,$(MAKEFLAGS)))
     ECHO = echo

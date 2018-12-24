@@ -16,18 +16,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/*
-
-TODO: micko, defs.h:
-    extern int output_lines;
-    #define MAX_OUTPUT_LINES 1000 - možda?
-    #define code(args...) ({fprintf(output, args); if (++output_lines > 1000) yyerror("Too many output lines"), exit(1); })
-micko, micko.y:
-    #include <stdlib.h>
-    int code_count = 0;
-
-*/
-
 #include <termios.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -357,13 +345,13 @@ word get_operand(Operand op) {
         case OP_DATA:
             return *getmem(symtab[op.data].address);
         default: {
-            simerror("get_operand fatal error");
+            simerror("get_operand fatal error"); // ne bi trebalo da se desi
         }
     }
 }
 
 //postavlja vrednost operanda
-void set_operand(Operand op, int data) {
+void set_operand(Operand op, word data) {
     switch (op.kind) {
         case OP_REGISTER:
             processor.reg[op.reg] = data;
@@ -381,7 +369,7 @@ void set_operand(Operand op, int data) {
             *getmem(symtab[op.data].address) = data;
             break;
         default: {
-            simerror("set_operand fatal error");
+            simerror("set_operand fatal error"); // ne bi trebalo da se desi
         }
     }
 }
@@ -405,6 +393,7 @@ void set_flags_unsigned(uquad result) {
 //izvršava jednu naredbu hipotetskog procesora
 void run_once() {
     Instruction *i = &codemem[processor.pc];
+    word operand0, operand1;
     if (processor.halt) return;
     switch (i->inst) {
         case INS_PUSH:
@@ -473,45 +462,53 @@ void run_once() {
                 processor.pc++;
             break;
         case INS_ADD:
+            operand0 = get_operand(i->op[0]);
+            operand1 = get_operand(i->op[1]);
             if (i->type == SIGNED_TYPE) {
-                set_operand(i->op[2], get_operand(i->op[0]) + get_operand(i->op[1]));
-                set_flags_signed((quad)get_operand(i->op[0]) + (quad)get_operand(i->op[1]));
+                set_operand(i->op[2], operand0 + operand1);
+                set_flags_signed((quad)operand0 + (quad)operand1);
             } else {
-                set_operand(i->op[2], (word)((uword)get_operand(i->op[0]) + (uword)get_operand(i->op[1])));
-                set_flags_unsigned((uquad)get_operand(i->op[0]) + (uquad)get_operand(i->op[1]));
+                set_operand(i->op[2], (word)((uword)operand0 + (uword)operand1));
+                set_flags_unsigned((uquad)operand0 + (uquad)operand1);
             }
             processor.pc++;
             break;
         case INS_SUB:
+            operand0 = get_operand(i->op[0]);
+            operand1 = get_operand(i->op[1]);
             if (i->type == SIGNED_TYPE) {
-                set_operand(i->op[2], get_operand(i->op[0]) - get_operand(i->op[1]));
-                set_flags_signed((quad)get_operand(i->op[0]) - (quad)get_operand(i->op[1]));
+                set_operand(i->op[2], operand0 - operand1);
+                set_flags_signed((quad)operand0 - operand1);
             } else {
-                set_operand(i->op[2], (word)((uword)get_operand(i->op[0]) - (uword)get_operand(i->op[1])));
-                set_flags_unsigned((uquad)get_operand(i->op[0]) - (uquad)get_operand(i->op[1]));
+                set_operand(i->op[2], (word)((uword)operand0 - (uword)operand1));
+                set_flags_unsigned((uquad)operand0 - (uquad)operand1);
             }
             processor.pc++;
             break;
         case INS_MUL:
+            operand0 = get_operand(i->op[0]);
+            operand1 = get_operand(i->op[1]);
             if (i->type == SIGNED_TYPE) {
-                set_operand(i->op[2], get_operand(i->op[0]) * get_operand(i->op[1]));
-                set_flags_signed((quad)get_operand(i->op[0]) * (quad)get_operand(i->op[1]));
+                set_operand(i->op[2], operand0 * operand1);
+                set_flags_signed((quad)operand0 * (quad)operand1);
             } else {
-                set_operand(i->op[2], (word)((uword)get_operand(i->op[0]) * (uword)get_operand(i->op[1])));
-                set_flags_signed((uquad)get_operand(i->op[0]) * (uquad)get_operand(i->op[1]));
+                set_operand(i->op[2], (word)((uword)operand0 * (uword)operand1));
+                set_flags_unsigned((uquad)operand0 * (uquad)operand1);
             }
             processor.pc++;
             break;
         case INS_DIV:
-            if (get_operand(i->op[1]) == 0) {
+            operand0 = get_operand(i->op[0]);
+            operand1 = get_operand(i->op[1]);
+            if (operand1 == 0) {
                 simerror("Division by zero");
             }
             if (i->type == SIGNED_TYPE) {
-                set_operand(i->op[2], get_operand(i->op[0]) / get_operand(i->op[1]));
-                set_flags_signed((quad)get_operand(i->op[0]) / (quad)get_operand(i->op[1]));
+                set_operand(i->op[2], operand0 / operand1);
+                set_flags_signed((quad)operand0 / (quad)operand1);
             } else {
-                set_operand(i->op[2], (word)((uword)get_operand(i->op[0]) / (uword)get_operand(i->op[1])));
-                set_flags_signed((uquad)get_operand(i->op[0]) / (uquad)get_operand(i->op[1]));
+                set_operand(i->op[2], (word)((uword)operand0 / (uword)operand1));
+                set_flags_unsigned((uquad)operand0 / (uquad)operand1);
             }
             processor.pc++;
             break;
@@ -523,7 +520,7 @@ void run_once() {
             processor.halt = TRUE;
             break;
         default: {
-            simerror("run_once fatal error");
+            simerror("run_once fatal error"); // ne bi trebalo da se desi
         }
     }
 }
