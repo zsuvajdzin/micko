@@ -1,23 +1,3 @@
-# 1. kompajliranje programa
-#       make
-# 2. brisanje automatski generisanih fajlova
-#       make clean
-# 3. pokretanje svih testova
-#       make test
-# 4. pokretanje samo nekih testova
-#       make test TEST=test-ok1.mc
-#       make test TEST="test-ok1.mc test-ok2.mc"
-
-# Nazivi test fajlova treba da slede sledeću konvenciju:
-#   Početak naziva      Značenje
-#     test-sanity       korektan miniC program bez novih konstrukcija (provera originalne gramatike)
-#     test-ok           korektan miniC program sa novim konstrukcijama
-#                       ukoliko sadrži komentar "//RETURN: <num>", nakon generisanja koda će se proveriti
-#                       da li se povratna vrednost izgenerisanog koda poklapa sa navedenom
-#     test-semerr       nekorektan miniC program sa (jednom) semantičkom greškom
-#     test-synerr       nekorektan miniC program sa (jednom) sintaksnom greškom
-# Ukoliko se u test fajlu nalazi red koji počinje sa //OPIS:, ta linija će biti ispisana pre samog testiranja.
-
 # bash je potreban da bi radila redirekcija stderr i stdout, kao i zbog PIPESTATUS promenljive
 SHELL = /bin/bash
 # naziv kompajlera i osnovnih source fajlova
@@ -45,7 +25,7 @@ COMPILER_CLEAN = lex.yy.c $(SRC).tab.c $(SRC).tab.h $(SRC).output $(SRC) *.?~ *.
 TEST = ""
 
 # pravila koja ne generišu nove fajlove
-.PHONY: clean cleanall test archive
+.PHONY: clean test det archive help
 
 # osnovno pravilo za prevođenje kompajlera
 $(SRC): $(COMPILER_DEPENDS)
@@ -77,14 +57,12 @@ $(SRC).tab.c: $(SRC).y
 clean:
 	@echo -e "\e[01;32mDeleting temporary files...\e[00m"
 	@rm -f $(COMPILER_CLEAN)
-
-cleanall: clean
 	@rm -f hipsim
 	@if [ -f ./hipsim-src/Makefile ]; then \
 	    make --silent -C ./hipsim-src/ clean ; \
 	fi
 
-archive: cleanall
+archive: clean
 	@arc=`pwd`; \
 	arc=`basename $$arc`; \
 	echo -e "\e[01;32mCreating archive ../$$arc.tar.gz\e[00m"; \
@@ -95,16 +73,16 @@ archive: cleanall
 # - ako u test fajlu postoji linija sa tekstom "//OPIS:", ispisaće se na ekranu
 # - ukoliko prilikom poziva kompajlera nije bilo grešaka, i ako postoji
 #   generisanje koda, ispisaće se i asemblerski izlaz
-test: $(SRC)
+det: $(SRC)
 	@if [ ! -f $(SRC) ]; then exit 1; fi
-	@echo -e "\n\e[01;34mRunning compiler with test files...\e[00m"
+	@echo -e "\n\e[01;36mRunning compiler with test files...\e[00m"
 	@if [ "$$TEST" != "" ]; then all_tests=$$TEST; \
 	else all_tests=test*.mc; fi; \
 	for test in $$all_tests; do \
 		if [[ $$test =~ .*synerr.* ]]; then echo -e "\e[01;35m"; ttyp="syn"; \
 		elif [[ $$test =~ .*semerr.* ]]; then echo -e "\e[01;34m"; ttyp="sem"; \
 		elif [[ $$test =~ .*sanity.* ]]; then echo -e "\e[01;32m"; ttyp="san"; \
-		else echo -e "\e[01;32m"; ttyp="ok"; fi; \
+		else echo -e "\e[01;36m"; ttyp="ok"; fi; \
 		echo -e "\n\n------------------------\nTesting: $$test"; \
 		grep "//OPIS:" $$test; \
 		echo -e "------------------------\e[00m"; \
@@ -139,13 +117,112 @@ test: $(SRC)
 			elif [ "$$RETURN" != "" ]; then \
 				echo -e "\e[01;34mRunning simulator...\e[00m"; \
 				RETVAL=$$(./hipsim -r -s 500 < "$${outname}.asm"); \
-				if [ "$$RETVAL" == "$$RETURN" ]; then \
-					echo -e -n "\e[01;32mReturn value: $$RETVAL\e[00m"; \
+				CODE=$$?; \
+				if [ $$CODE -ne 0 ]; then \
+					if [ $$CODE -eq 4 ]; then \
+						echo -e -n "\n\n\e[01;31mASM code has an infinite loop (didn't finish in 500 steps).\e[00m"; \
+					elif [ $$CODE -eq 3 ]; then \
+						echo -e -n "\n\n\e[01;31mASM code produced illegal operation.\e[00m"; \
+					else \
+						echo -e -n "\n\n\e[01;31mErrors found in generated ASM code.\e[00m"; \
+					fi; \
 				else \
-					echo -e -n "\e[01;31mReturn value: $$RETVAL\e[00m, should be $$RETURN."; \
+					if [ "$$RETVAL" == "$$RETURN" ]; then \
+						echo -e -n "\e[01;32mReturn value: $$RETVAL\e[00m"; \
+					else \
+						echo -e -n "\e[01;31mReturn value: $$RETVAL\e[00m, should be $$RETURN."; \
+					fi; \
 				fi; \
 			fi; \
 		fi; \
 	done; \
 	echo
+
+# testiranje kompajlera sa minimalnim ispisom
+test: $(SRC)
+	@if [ ! -f $(SRC) ]; then exit 1; fi
+	@echo -e "\n\e[01;36mRunning compiler with test files...\e[00m\n"
+	@if [ "$$TEST" != "" ]; then all_tests=$$TEST; \
+	else all_tests=test*.mc; fi; \
+	RESULTP="\e[01;32mPASSED\e[00m"; \
+	RESULTF="\e[01;31mFAILED\e[00m"; \
+	for test in $$all_tests; do \
+		RESULT=$$RESULTP; \
+		if [[ $$test =~ .*synerr.* ]]; then echo -e -n "\e[01;35m"; ttyp="syn"; \
+		elif [[ $$test =~ .*semerr.* ]]; then echo -e -n "\e[01;34m"; ttyp="sem"; \
+		elif [[ $$test =~ .*sanity.* ]]; then echo -e -n "\e[01;32m"; ttyp="san"; \
+		else echo -e -n "\e[01;36m"; ttyp="ok"; fi; \
+		RETURN=$$(grep "//RETURN:" "$$test"); \
+		RETURN=$${RETURN#*:}; \
+		RETURN=$$(echo "$$RETURN" | xargs); \
+		./$(SRC) < "$$test" 1>/dev/null 2>/dev/null; \
+		out=$$?; \
+		if [ $$ttyp == "ok" ] && [ $$out -ne 0 ]; then \
+			RESULT=$$RESULTF; \
+		elif [ $$ttyp == "san" ] && [ $$out -ne 0 ]; then \
+			RESULT=$$RESULTF; \
+		elif [ $$ttyp == "sem" ] && ([ $$out -eq 0 ] || [ $$out -eq 255 ]); then \
+			RESULT=$$RESULTF; \
+		elif [ $$ttyp == "syn" ] && [ $$out -ne 255 ]; then \
+			RESULT=$$RESULTF; \
+		elif [ "$(ASM)" == "true" ] && [ $$out -eq 0 ]; then \
+			outname=$$(basename $$test); \
+			outname=$${outname%.*}; \
+			mv output.asm "$${outname}.asm"; \
+			if [ -f $${outname}.asm.ok ]; then \
+				diff -w -B "$${outname}.asm" "$${outname}.asm.ok" > /dev/null; \
+				if [ $$? -ne 0 ]; then \
+					if [[ $$ttyp == "san" ]]; then \
+						RESULT=$$RESULTF; \
+					else \
+						RESULT=$$RESULTF; \
+					fi; \
+				fi; \
+			elif [ "$$RETURN" != "" ]; then \
+				RETVAL=$$(./hipsim -r -s 500 < "$${outname}.asm" 2>/dev/null); \
+				CODE=$$?; \
+				if [ $$CODE -ne 0 ]; then \
+					if [ $$CODE -eq 4 ]; then \
+						RESULT=$$RESULTF; \
+					elif [ $$CODE -eq 3 ]; then \
+						RESULT=$$RESULTF; \
+					else \
+						RESULT=$$RESULTF; \
+					fi; \
+				else \
+					if ! [ "$$RETVAL" == "$$RETURN" ]; then \
+						RESULT=$$RESULTF; \
+					fi; \
+				fi; \
+			fi; \
+		fi; \
+		echo -e "$$test: $$RESULT"; \
+	done; \
+	echo -e "\n\e[01;31mAttention: \e[01;36mtests with errors are valid \e[01;32monly if\e[01;36m ok tests are passed!\e[00m"; \
+	echo -e "\n\e[01;36mRun \e[01;32mmake det\e[01;36m for detailed results.\e[00m\n"
+
+help:
+	@echo -e "\n\e[01;36mKompajliranje programa\e[00m"
+	@echo -e "    \e[01;32mmake\e[00m"
+	@echo -e "\n\e[01;36mBrisanje automatski generisanih fajlova\e[00m"
+	@echo -e "    \e[01;32mmake clean\e[00m"
+	@echo -e "\n\e[01;36mPokretanje svih testova sa kratkim ispisom\e[00m"
+	@echo -e "    \e[01;32mmake test\e[00m"
+	@echo -e "\n\e[01;36mPokretanje svih testova sa detaljnim ispisom\e[00m"
+	@echo -e "    \e[01;32mmake det\e[00m"
+	@echo -e "\n\e[01;36mPokretanje samo nekih testova\e[00m"
+	@echo -e "    \e[01;32mmake test TEST=test-ok1.mc\e[00m"
+	@echo -e "    \e[01;32mmake det TEST=\"test-ok1.mc test-ok2.mc\"\e[00m"
+	@echo -e "\n\e[01;36mNazivi test fajlova treba da slede sledeću konvenciju:\e[00m"
+	@echo -e "  \e[01;35mPočetak naziva  Značenje\e[00m"
+	@echo -e "    \e[01;36mtest-sanity\e[00m - korektan miniC program bez novih konstrukcija"
+	@echo -e "                  (provera originalne gramatike)"
+	@echo -e "    \e[01;36mtest-ok\e[00m ----- korektan miniC program sa novim konstrukcijama"
+	@echo -e "                  - ukoliko sadrži komentar \e[01;36m//RETURN: <num>\e[00m, nakon"
+	@echo -e "                    generisanja koda će se proveriti da li se povratna"
+	@echo -e "                    vrednost izgenerisanog koda poklapa sa navedenom"
+	@echo -e "    \e[01;36mtest-semerr\e[00m - nekorektan miniC program sa jednom semantičkom greškom"
+	@echo -e "    \e[01;36mtest-synerr\e[00m - nekorektan miniC program sa jednom sintaksnom greškom"
+	@echo -e "Ukoliko se u test fajlu nalazi red koji počinje sa \e[01;36m//OPIS: <tekst>\e[00m, ta linija"
+	@echo -e "će biti ispisana pre testa.\n"
 
