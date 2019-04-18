@@ -20,7 +20,7 @@ COMPILER_BUILD = lex.yy.c $(SRC).tab.c symtab.c $(CGENC)
 # fajlovi od kojih zavisi ponovno prevođenje
 COMPILER_DEPENDS = $(COMPILER_BUILD) defs.h symtab.h $(CGENH)
 # fajlovi koje treba pobrisati da bi ostao samo izvorni kod
-COMPILER_CLEAN = lex.yy.c $(SRC).tab.c $(SRC).tab.h $(SRC).output $(SRC) *.?~ *.mc~ .make.out* *.asm Makefile~
+COMPILER_CLEAN = lex.yy.c $(SRC).tab.c $(SRC).tab.h $(SRC).output $(SRC) *.?~ *.mc~ .make.out* *.asm Makefile~ *.txt~
 # ako treba sprovesti samo neke testove, ovu promenljivu treba postaviti na naziv testa
 TEST = ""
 
@@ -64,7 +64,7 @@ clean:
 
 archive: clean
 	@arc=`pwd`; \
-	arc=`basename $$arc`; \
+	arc=`basename "$$arc"`; \
 	echo -e "\e[01;32mCreating archive ../$$arc.tar.gz\e[00m"; \
 	tar --exclude=*.gz -czf ../$$arc.tar.gz ../$$arc
 
@@ -82,6 +82,7 @@ det: $(SRC)
 		if [[ $$test =~ .*synerr.* ]]; then echo -e "\e[01;35m"; ttyp="syn"; \
 		elif [[ $$test =~ .*semerr.* ]]; then echo -e "\e[01;34m"; ttyp="sem"; \
 		elif [[ $$test =~ .*sanity.* ]]; then echo -e "\e[01;32m"; ttyp="san"; \
+		elif [[ $$test =~ .*warn.* ]]; then echo -e "\e[01;33m"; ttyp="war"; \
 		else echo -e "\e[01;36m"; ttyp="ok"; fi; \
 		echo -e "\n\n------------------------\nTesting: $$test"; \
 		grep "//OPIS:" $$test; \
@@ -92,10 +93,12 @@ det: $(SRC)
 		./$(SRC) < "$$test"; \
 		out=$$?; \
 		if [ $$ttyp == "ok" ] && [ $$out -ne 0 ]; then \
-			echo -e "\e[01;31m\nError reported for '$$test'!\n\e[00m" ; \
+			echo -e "\e[01;31m\nError/warning reported for '$$test'!\n\e[00m" ; \
+		elif [ $$ttyp == "war" ] && ([ $$out -lt 128 ] || [ $$out -eq 255 ]); then \
+			echo -e "\e[01;31m\nWarning not reported for '$$test'!\n\e[00m" ; \
 		elif [ $$ttyp == "san" ] && [ $$out -ne 0 ]; then \
 			echo -e "\e[01;31m\nOriginal miniC grammar is corrupted!\n\e[00m" ; \
-		elif [ $$ttyp == "sem" ] && ([ $$out -eq 0 ] || [ $$out -eq 255 ]); then \
+		elif [ $$ttyp == "sem" ] && ([ $$out -eq 0 ] || [ $$out -gt 127 ]); then \
 			echo -e "\e[01;31m\nSemantic error not reported for '$$test'!\n\e[00m" ; \
 		elif [ $$ttyp == "syn" ] && [ $$out -ne 255 ]; then \
 			echo -e "\e[01;31m\nSyntax error not reported for '$$test'!\n\e[00m" ; \
@@ -151,6 +154,7 @@ test: $(SRC)
 		if [[ $$test =~ .*synerr.* ]]; then echo -e -n "\e[01;35m"; ttyp="syn"; \
 		elif [[ $$test =~ .*semerr.* ]]; then echo -e -n "\e[01;34m"; ttyp="sem"; \
 		elif [[ $$test =~ .*sanity.* ]]; then echo -e -n "\e[01;32m"; ttyp="san"; \
+		elif [[ $$test =~ .*warn.* ]]; then echo -e -n "\e[01;33m"; ttyp="war"; \
 		else echo -e -n "\e[01;36m"; ttyp="ok"; fi; \
 		RETURN=$$(grep "//RETURN:" "$$test"); \
 		RETURN=$${RETURN#*:}; \
@@ -159,9 +163,11 @@ test: $(SRC)
 		out=$$?; \
 		if [ $$ttyp == "ok" ] && [ $$out -ne 0 ]; then \
 			RESULT=$$RESULTF; \
+		elif [ $$ttyp == "war" ] && ([ $$out -lt 128 ] || [ $$out -eq 255 ]); then \
+			RESULT=$$RESULTF; \
 		elif [ $$ttyp == "san" ] && [ $$out -ne 0 ]; then \
 			RESULT=$$RESULTF; \
-		elif [ $$ttyp == "sem" ] && ([ $$out -eq 0 ] || [ $$out -eq 255 ]); then \
+		elif [ $$ttyp == "sem" ] && ([ $$out -eq 0 ] || [ $$out -gt 127 ]); then \
 			RESULT=$$RESULTF; \
 		elif [ $$ttyp == "syn" ] && [ $$out -ne 255 ]; then \
 			RESULT=$$RESULTF; \
@@ -221,6 +227,7 @@ help:
 	@echo -e "                  - ukoliko sadrži komentar \e[01;36m//RETURN: <num>\e[00m, nakon"
 	@echo -e "                    generisanja koda će se proveriti da li se povratna"
 	@echo -e "                    vrednost izgenerisanog koda poklapa sa navedenom"
+	@echo -e "    \e[01;36mtest-warn\e[00m --- nekorektan miniC program sa jednim upozorenjem"
 	@echo -e "    \e[01;36mtest-semerr\e[00m - nekorektan miniC program sa jednom semantičkom greškom"
 	@echo -e "    \e[01;36mtest-synerr\e[00m - nekorektan miniC program sa jednom sintaksnom greškom"
 	@echo -e "Ukoliko se u test fajlu nalazi red koji počinje sa \e[01;36m//OPIS: <tekst>\e[00m, ta linija"

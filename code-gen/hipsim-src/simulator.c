@@ -1,6 +1,6 @@
 /*
     This file is part of HipSim.
-    HipSim (c) 2013,2016 Žarko Živanov
+    HipSim (c) 2013,2019 Žarko Živanov
 
     HipSim is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -378,16 +378,16 @@ void set_operand(Operand op, word data) {
 void set_flags_signed(quad result) {
     processor.zero = result == 0 ? 1 : 0;
     processor.sign = (result & 0x80000000) != 0 ? 1 : 0;
-    processor.carry = (result > INT32_MAX) || (result < INT32_MIN) ? 1 : 0;
-    processor.overflow = 0;
+    processor.carry = 0;
+    processor.overflow = (result > INT32_MAX) || (result < INT32_MIN) ? 1 : 0;
 }
 
 //postavi indikatore procesora za neoznačeni rezultat
 void set_flags_unsigned(uquad result) {
     processor.zero = result == 0 ? 1 : 0;
     processor.sign = (result & 0x80000000) != 0 ? 1 : 0;
-    processor.carry = 0;
-    processor.overflow = (result > UINT32_MAX) ? 1 : 0;
+    processor.carry = (result > UINT32_MAX) ? 1 : 0;
+    processor.overflow = 0;
 }
 
 //izvršava jednu naredbu hipotetskog procesora
@@ -419,7 +419,7 @@ void run_once() {
             if (i->type == SIGNED_TYPE)
                 set_flags_signed((quad)get_operand(i->op[0]) - (quad)get_operand(i->op[1]));
             else
-                set_flags_unsigned((uquad)get_operand(i->op[0]) - (uquad)get_operand(i->op[1]));
+                set_flags_unsigned((uquad)(uword)get_operand(i->op[0]) - (uquad)(uword)get_operand(i->op[1]));
             processor.pc++;
             break;
         case INS_JMP:
@@ -438,25 +438,57 @@ void run_once() {
                 processor.pc++;
             break;
         case INS_JGT:
-            if (!processor.zero && !processor.sign)
+            if ( (i->type == SIGNED_TYPE) && (( (~(processor.sign^processor.overflow)) & (~processor.zero) )&1) )
+                processor.pc = symtab[i->op[0].data].address;
+            else if ( (i->type == UNSIGNED_TYPE) && (( (~processor.carry) & (~processor.zero) )&1) )
                 processor.pc = symtab[i->op[0].data].address;
             else
                 processor.pc++;
             break;
         case INS_JLT:
-            if (!processor.zero && processor.sign)
+            if ( (i->type == SIGNED_TYPE) && (( processor.sign^processor.overflow )&1) )
+                processor.pc = symtab[i->op[0].data].address;
+            else if ( (i->type == UNSIGNED_TYPE) && (( processor.carry )&1) )
                 processor.pc = symtab[i->op[0].data].address;
             else
                 processor.pc++;
             break;
         case INS_JGE:
-            if (processor.zero || !processor.sign)
+            if ( (i->type == SIGNED_TYPE) && (( ~(processor.sign^processor.overflow) )&1) )
+                processor.pc = symtab[i->op[0].data].address;
+            else if ( (i->type == UNSIGNED_TYPE) && (( ~processor.carry )&1) )
                 processor.pc = symtab[i->op[0].data].address;
             else
                 processor.pc++;
             break;
         case INS_JLE:
-            if (processor.zero || processor.sign)
+            if ( (i->type == SIGNED_TYPE) && (( (processor.sign^processor.overflow) | processor.zero )&1) )
+                processor.pc = symtab[i->op[0].data].address;
+            else if ( (i->type == UNSIGNED_TYPE) && (( processor.carry | processor.zero )&1) )
+                processor.pc = symtab[i->op[0].data].address;
+            else
+                processor.pc++;
+            break;
+        case INS_JC:
+            if (processor.carry)
+                processor.pc = symtab[i->op[0].data].address;
+            else
+                processor.pc++;
+            break;
+        case INS_JNC:
+            if (!processor.carry)
+                processor.pc = symtab[i->op[0].data].address;
+            else
+                processor.pc++;
+            break;
+        case INS_JO:
+            if (processor.overflow)
+                processor.pc = symtab[i->op[0].data].address;
+            else
+                processor.pc++;
+            break;
+        case INS_JNO:
+            if (!processor.overflow)
                 processor.pc = symtab[i->op[0].data].address;
             else
                 processor.pc++;
@@ -469,7 +501,7 @@ void run_once() {
                 set_flags_signed((quad)operand0 + (quad)operand1);
             } else {
                 set_operand(i->op[2], (word)((uword)operand0 + (uword)operand1));
-                set_flags_unsigned((uquad)operand0 + (uquad)operand1);
+                set_flags_unsigned((uquad)(uword)operand0 + (uquad)(uword)operand1);
             }
             processor.pc++;
             break;
@@ -478,10 +510,10 @@ void run_once() {
             operand1 = get_operand(i->op[1]);
             if (i->type == SIGNED_TYPE) {
                 set_operand(i->op[2], operand0 - operand1);
-                set_flags_signed((quad)operand0 - operand1);
+                set_flags_signed((quad)operand0 - (quad)operand1);
             } else {
                 set_operand(i->op[2], (word)((uword)operand0 - (uword)operand1));
-                set_flags_unsigned((uquad)operand0 - (uquad)operand1);
+                set_flags_unsigned((uquad)(uword)operand0 - (uquad)(uword)operand1);
             }
             processor.pc++;
             break;
@@ -493,7 +525,7 @@ void run_once() {
                 set_flags_signed((quad)operand0 * (quad)operand1);
             } else {
                 set_operand(i->op[2], (word)((uword)operand0 * (uword)operand1));
-                set_flags_unsigned((uquad)operand0 * (uquad)operand1);
+                set_flags_unsigned((uquad)(uword)operand0 * (uquad)(uword)operand1);
             }
             processor.pc++;
             break;
@@ -508,7 +540,7 @@ void run_once() {
                 set_flags_signed((quad)operand0 / (quad)operand1);
             } else {
                 set_operand(i->op[2], (word)((uword)operand0 / (uword)operand1));
-                set_flags_unsigned((uquad)operand0 / (uquad)operand1);
+                set_flags_unsigned((uquad)(uword)operand0 / (uquad)(uword)operand1);
             }
             processor.pc++;
             break;

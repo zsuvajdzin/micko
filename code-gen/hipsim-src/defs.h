@@ -1,6 +1,6 @@
 /*
     This file is part of HipSim.
-    HipSim (c) 2013,2016 Žarko Živanov
+    HipSim (c) 2013,2019 Žarko Živanov
 
     HipSim is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 #ifndef DEFS_H
 #define DEFS_H
 
-#define VERSION "1.1.3"
+#define VERSION "1.2"
 
 #include <stdint.h>
 
@@ -40,8 +40,9 @@ enum { NO_TYPE = 0, SIGNED_TYPE, UNSIGNED_TYPE };
 enum { OP_REGISTER = 1, OP_INDIRECT, OP_INDEX, OP_CONSTANT, OP_ADDRESS, OP_DATA } OperandType;
 
 //instrukcije
-enum { INS_CALL = 1, INS_RET, INS_PUSH, INS_POP, INS_CMP, INS_JMP, INS_JEQ, INS_JNE, INS_JGT,
-       INS_JLT, INS_JGE, INS_JLE, INS_ADD, INS_SUB, INS_MUL, INS_DIV, INS_MOV, INS_HALT };
+enum { INS_CALL = 1, INS_RET, INS_PUSH, INS_POP, INS_CMP, INS_JMP, INS_JEQ, INS_JNE,
+        INS_JGT, INS_JLT, INS_JGE, INS_JLE, INS_JC, INS_JNC, INS_JO, INS_JNO,
+        INS_ADD, INS_SUB, INS_MUL, INS_DIV, INS_MOV, INS_HALT };
 
 #define FUNCTION_REGISTER        13
 #define FRAME_POINTER            14

@@ -1,6 +1,6 @@
 /*
     This file is part of HipSim.
-    HipSim (c) 2013,2016 Žarko Živanov
+    HipSim (c) 2013,2019 Žarko Živanov
 
     HipSim is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -47,7 +47,7 @@ int mainarg = 0;
 %}
 
 %union {
-    int i;
+    long i;
     char* s;
 }
 
@@ -67,6 +67,10 @@ int mainarg = 0;
 %token <i> _JLT
 %token <i> _JGE
 %token <i> _JLE
+%token _JC
+%token _JNC
+%token _JO
+%token _JNO
 
 %token <i> _ADD
 %token <i> _SUB
@@ -110,7 +114,7 @@ variable
             uchar data[256];
             int i,len = $4*4;
             for (i=0; i<len; i++) data[i] = 0;
-            insert_source("%s:\t\t\tWORD %d",$1,$4);
+            insert_source("%s:\t\t\tWORD %ld",$1,$4);
             insert_data(data,len, $1, $<i>2);
         }
     ;
@@ -220,6 +224,26 @@ flowcontrol
             insert_source("\t\t\tJLE%c %s", type_char($1), $2);
             insert_code(INS_JLE, $1, yylineno);
         }
+    |   _JC label
+        {
+            insert_source("\t\t\tJC %s", $2);
+            insert_code(INS_JC, NO_TYPE, yylineno);
+        }
+    |   _JNC label
+        {
+            insert_source("\t\t\tJNC %s", $2);
+            insert_code(INS_JNC, NO_TYPE, yylineno);
+        }
+    |   _JO label
+        {
+            insert_source("\t\t\tJO %s", $2);
+            insert_code(INS_JO, NO_TYPE, yylineno);
+        }
+    |   _JNO label
+        {
+            insert_source("\t\t\tJNO %s", $2);
+            insert_code(INS_JNO, NO_TYPE, yylineno);
+        }
     ;
 
 stack
@@ -261,17 +285,17 @@ output
     :   _REGISTER
         {
             add_operand(OP_REGISTER,$1,0);
-            $$ = make_opstr("%%%d",$1);
+            $$ = make_opstr("%%%ld",$1);
         }
     |   _NUMBER _LPAREN _REGISTER _RPAREN
         {
             add_operand(OP_INDEX,$3,$1);
-            $$ = make_opstr("%d(%%%d)",$1,$3);
+            $$ = make_opstr("%ld(%%%ld)",$1,$3);
         }
     |   _LPAREN _REGISTER _RPAREN
         {
             add_operand(OP_INDIRECT,$2,0);
-            $$ = make_opstr("(%%%d)",$2);
+            $$ = make_opstr("(%%%ld)",$2);
         }
     |   label
     ;
@@ -280,7 +304,7 @@ input
     :   _CONSTANT
         {
             add_operand(OP_CONSTANT,0,$1);
-            $$ = make_opstr("$%d",$1);
+            $$ = make_opstr("$%ld",$1);
         }
     |   _ADDRESS
         {
@@ -297,7 +321,7 @@ input
 %%
 
 int yyerror(char *s) {
-    fprintf(stderr, "\nParsing error in line %d: %s", yylineno, s);
+    fprintf(stderr, "\nSimulator: ASM parsing error in line %d: %s\n", yylineno, s);
     error_count++;
     return 0;
 }
@@ -317,7 +341,7 @@ int main(int argc, char *argv[]) {
         if (c == -1) break;
         switch(c) {
             case 'h' : {
-                    cprintf("\n{BLU}Hypotetic processor simulator{NRM} v%s",VERSION);
+                    cprintf("\n{BLU}Hypothetic processor simulator{NRM} v%s",VERSION);
                     cprintf("\n\nUsage: {BLU}%s{NRM} [options] {BLU}< asm_file{NRM}", basename(strdup(argv[0])));
                     cprintf("\nIf started without options, simulator will run asm code");
                     cprintf("\nstep by step. Possible options are:");
@@ -365,10 +389,11 @@ int main(int argc, char *argv[]) {
 
     //parsiranje asemblerskog koda
     init_simulator();
-    yyparse();
-    check_labels();
-    if (print_variable && !check_global(print_variable)) {
-        argerror("Undeclared global variable %s",print_variable);
+    if ( ! yyparse() ) {
+        check_labels();
+        if (print_variable && !check_global(print_variable)) {
+            argerror("Undeclared global variable %s",print_variable);
+        }
     }
 
     //preusmeravanje terminala na stdin

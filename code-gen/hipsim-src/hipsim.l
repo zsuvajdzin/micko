@@ -1,6 +1,6 @@
 /*
     This file is part of HipSim.
-    HipSim (c) 2013,2016 Žarko Živanov
+    HipSim (c) 2013,2019 Žarko Živanov
 
     HipSim is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -57,6 +57,10 @@ JGES    { yylval.i = SIGNED_TYPE; return _JGE; }
 JGEU    { yylval.i = UNSIGNED_TYPE; return _JGE; }
 JLES    { yylval.i = SIGNED_TYPE; return _JLE; }
 JLEU    { yylval.i = UNSIGNED_TYPE; return _JLE; }
+JC      { return _JC; }
+JNC     { return _JNC; }
+JO      { return _JO; }
+JNO     { return _JNO; }
 
 ADDS    { yylval.i = SIGNED_TYPE; return _ADD; }
 ADDU    { yylval.i = UNSIGNED_TYPE; return _ADD; }
@@ -70,8 +74,8 @@ MOV     { return _MOV; }
 HALT    { return _HALT; }
 
 "%"{digit}{1,2}  { yylval.i = atoi(yytext+1); return _REGISTER; }
-"$"[+-]?{digit}+  { yylval.i = atoi(yytext+1); return _CONSTANT; }
-[+-]?{digit}+ { yylval.i = atoi(yytext); return _NUMBER; }
+"$"[+-]?{digit}+  { yylval.i = atol(yytext+1); return _CONSTANT; }
+[+-]?{digit}+ { yylval.i = atol(yytext); return _NUMBER; }
 {letter}{alpha}*":" { yylval.s = strdup(yytext); yylval.s[yyleng-1] = 0; return _LABEL_DEF; }
 {letter}{alpha}*    { yylval.s = strdup(yytext); return _LABEL; }
 "$"{letter}{alpha}*    { yylval.s = strdup(yytext+1); return _ADDRESS; }

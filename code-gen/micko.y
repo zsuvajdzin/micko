@@ -328,7 +328,11 @@ int main() {
 
   if(synerr)
     return -1;
+  else if(error_count)
+    return error_count & 127;
+  else if(warning_count)
+    return (warning_count & 127) + 127;
   else
-    return error_count;
+    return 0;
 }
 

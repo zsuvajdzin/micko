@@ -111,6 +111,20 @@ http://zobayer.blogspot.com/2010/12/getch-getche-in-gccg.html
 5. Istorija izmena
 ------------------
 
+1.2 - 30.01.2019.
+    defs.h
+        - dodate definicije za JC, JNC, JO i JNO
+    simulator.c
+        - simulacija sada radi korektno za neoznačene vrednosti veće od 2^31
+        - dodata simulacija za JC, JNC, JO i JNO
+    hipsim.l
+        - dodato prepoznavanje za JC, JNC, JO i JNO
+        - iskorišteno atol umesto atoi
+    hipsim.y
+        - union član i promenjen sa int na long
+        - dodata obrada za JC, JNC, JO i JNO
+        - ukoliko ima grešaka u ASM kodu, ne radi se analiza labela
+
 1.1.3 - 14.01.2018.
     defs.h
         - nešto izmenjen ispis za argerror i simerror makroe

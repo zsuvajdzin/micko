@@ -1,4 +1,5 @@
-//OPIS: ABS funkcija, rezultat 5
+//OPIS: ABS funkcija
+//RETURN: 5
 
 int abs(int i) {
   int res;
