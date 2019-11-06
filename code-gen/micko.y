@@ -54,12 +54,8 @@
 program
   : function_list
       {  
-        int idx = lookup_symbol("main", FUN);
-        if(idx == NO_INDEX)
+        if(lookup_symbol("main", FUN) == NO_INDEX)
           err("undefined reference to 'main'");
-        else 
-          if(get_type(idx) != INT)
-            warn("return type of 'main' is not int");
       }
   ;
 
@@ -149,7 +145,7 @@ compound_statement
 assignment_statement
   : _ID _ASSIGN num_exp _SEMICOLON
       {
-        int idx = lookup_symbol($1, (VAR|PAR));
+        int idx = lookup_symbol($1, VAR|PAR);
         if(idx == NO_INDEX)
           err("invalid lvalue '%s' in assignment", $1);
         else
@@ -166,7 +162,7 @@ num_exp
       {
         if(get_type($1) != get_type($3))
           err("invalid operands: arithmetic operation");
-        int t1 = get_type($1);
+        int t1 = get_type($1);    
         code("\n\t\t%s\t", ar_instructions[$2 + (t1 - 1) * AROP_NUMBER]);
         gen_sym_name($1);
         code(",");
@@ -185,7 +181,7 @@ exp
 
   | _ID
       {
-        $$ = lookup_symbol($1, (VAR|PAR));
+        $$ = lookup_symbol($1, VAR|PAR);
         if($$ == NO_INDEX)
           err("'%s' undeclared", $1);
       }
@@ -212,7 +208,7 @@ function_call
   : _ID 
       {
         fcall_idx = lookup_symbol($1, FUN);
-        if(fcall_idx == -1)
+        if(fcall_idx == NO_INDEX)
           err("'%s' is not a function", $1);
       }
     _LPAREN argument _RPAREN

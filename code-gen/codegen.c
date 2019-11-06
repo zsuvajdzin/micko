@@ -54,9 +54,9 @@ void gen_sym_name(int index) {
 
 void gen_cmp(int op1_index, int op2_index) {
   if(get_type(op1_index) == INT)
-    code("\n\t\t\tCMPS \t");
+    code("\n\t\tCMPS \t");
   else
-    code("\n\t\t\tCMPU \t");
+    code("\n\t\tCMPU \t");
   gen_sym_name(op1_index);
   code(",");
   gen_sym_name(op2_index);
@@ -65,7 +65,7 @@ void gen_cmp(int op1_index, int op2_index) {
 }
 
 void gen_mov(int input_index, int output_index) {
-  code("\n\t\t\tMOV \t");
+  code("\n\t\tMOV \t");
   gen_sym_name(input_index);
   code(",");
   gen_sym_name(output_index);

@@ -61,7 +61,14 @@ variable_list
   ;
 
 variable
-  : type _ID _SEMICOLON
+  : _TYPE _ID _SEMICOLON
+      {
+        int i = lookup_symbol($2,VAR|PAR);
+        if(i == NO_INDEX)
+          insert_symbol($2, VAR, $1, var_num++, NO_ATR);
+        else
+          err("duplicated local var");
+      }
   ;
 
 statement_list

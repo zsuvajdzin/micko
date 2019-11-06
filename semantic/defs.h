@@ -6,6 +6,7 @@
 #define FALSE 0
 
 #define SYMBOL_TABLE_LENGTH   64
+#define NO_INDEX              -1
 #define NO_ATR                 0
 #define LAST_WORKING_REG      12
 #define FUN_REG               13

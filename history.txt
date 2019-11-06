@@ -167,5 +167,16 @@ novembar 2018
 - izmenjen Makefile tako da radi i proveru za warninge
 
 
+oktobar 2019
+- izmenjen Makefile tako da daje kratak ili detaljan prikaz
+- nema vise pojma type, samo token _TYPE
+- uvedena konstanta NO_INDEX sa vrednoscu -1 
+- Generisanje koda:
+- izbacen get_arop_stmt() i pristupa se nizu ar_instructions[] direkno
+- funkcija print_symbol() je preimenovana u gen_sym_name() 
+- ukinute su funkcije za generisanje labela, sada se za to koristi code makro
+- indentacija kod generisanja koda je smanjena sa 3 taba na 2 taba
+- main funkcija moze biti bilo kog tipa (i int i uint), radi prosirenja opsega test primera
+
 
 
